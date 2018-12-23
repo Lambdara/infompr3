@@ -51,4 +51,4 @@ def run(steps,batch_size=10):
         print ("Iterations: %d\t Discriminator loss: %.4f\t Generator loss: %.4f"%(i,dloss,gloss))
 
 def get_image(path):
-    Image.fromarray(gen.eval(session=sess,feed_dict={Z: np.random.uniform(size=(1,3072))})[0].reshape(32,32,3).astype(np.uint8)).save(path)
+    Image.fromarray((((gen.eval(session=sess,feed_dict={Z: np.random.uniform(size=(1,3072))})[0]+1)/2)*255).reshape(32,32,3).astype(np.uint8)).save(path)
