@@ -2,15 +2,16 @@ import os
 from PIL import Image # pillow package
 import numpy as np
 import xmltodict
+import scipy
+
+imgsize = (32,32)
 
 def get_cats_and_dogs():
     names = [path.rsplit('.',1)[0] for path in os.listdir('../data/xmls')]
     cats = []
     dogs = []
 
-    weird = None
     for name in names:
-        print(name)
         img = np.array(Image.open('../data/images/' + name + '.jpg'))
 
         with open('../data/xmls/' + name + '.xml') as xml_file:
@@ -25,15 +26,15 @@ def get_cats_and_dogs():
             xmax = int(box['xmax'])
             ymin = int(box['ymin'])
             ymax = int(box['ymax'])
-            subimg = img[ymin:ymax,xmin:xmax]
+            subimg = scipy.misc.imresize(img[ymin:ymax,xmin:xmax],imgsize)
 
-            if species == 'cat':
-                cats.append(subimg)
-            elif species == 'dog':
-                dogs.append(subimg)
-            else:
-                print('Unrecognized species')
-
+            if np.shape(subimg) == (32,32,3):
+                if species == 'cat':
+                    cats.append(subimg)
+                elif species == 'dog':
+                    dogs.append(subimg)
+                else:
+                    print('Unrecognized species')
 
         if type(xml['annotation']['object']) == list:
             for obj in xml['annotation']['object']:
