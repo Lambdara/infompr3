@@ -1,14 +1,15 @@
 import os
-from PIL import Image # pillow package
+from PIL import Image  # pillow package
 import numpy as np
 import xmltodict
 import scipy
 import scipy.misc
 
-imgsize = (32,32)
+imgsize = (32, 32)
+
 
 def get_cats_and_dogs():
-    names = [path.rsplit('.',1)[0] for path in os.listdir('../data/xmls')]
+    names = [path.rsplit('.', 1)[0] for path in os.listdir('../data/xmls')]
     cats = []
     dogs = []
 
@@ -27,9 +28,9 @@ def get_cats_and_dogs():
             xmax = int(box['xmax'])
             ymin = int(box['ymin'])
             ymax = int(box['ymax'])
-            subimg = scipy.misc.imresize(img[ymin:ymax,xmin:xmax],imgsize)
+            subimg = scipy.misc.imresize(img[ymin:ymax, xmin:xmax], imgsize)
 
-            if np.shape(subimg) == (32,32,3):
+            if np.shape(subimg) == (32, 32, 3):
                 if species == 'cat':
                     cats.append(subimg)
                 elif species == 'dog':
@@ -42,4 +43,4 @@ def get_cats_and_dogs():
                 process_object(obj)
         else:
             process_object(xml['annotation']['object'])
-    return cats,dogs
+    return cats, dogs

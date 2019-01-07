@@ -2,7 +2,7 @@ from PIL import Image
 import os
 import sys
 
-from resizeimage import resizeimage
+# from resizeimage import resizeimage
 
 directory = sys.argv[1]
 resized_directory = directory.rsplit('/', 1)[0] + '/resized_images'
