@@ -3,12 +3,11 @@ import numpy as np
 import data
 from PIL import Image
 
-if 'cats' not in globals() or 'sample_data' not in globals():
-    cats,_ = data.get_cats_and_dogs()
-    sample_data = np.array([img.reshape(3072)/255*2-1 for img in cats])
+(sample_data,_),_ = tf.keras.datasets.mnist.load_data()
+sample_data = sample_data.reshape(-1,28*28)/255*2-1
 
-gen_learning_rate = 0.001
-dis_learning_rate = 0.001
+gen_learning_rate = 0.0001
+dis_learning_rate = 0.0001
 noise_size = 8
 
 def load_gan():
@@ -16,22 +15,22 @@ def load_gan():
 
     tf.reset_default_graph()
 
-    def generator(Z,hsize=[128,1024],reuse=False):
+    def generator(Z,hsize=[28,10],reuse=False):
         with tf.variable_scope("GAN/Generator",reuse=reuse):
-            h1 = tf.layers.dense(Z,hsize[0],activation=tf.nn.leaky_relu)
-            h2 = tf.layers.dense(h1,hsize[1],activation=tf.nn.leaky_relu)
-            out = tf.layers.dense(h2,3072)
+            h1 = tf.layers.dense(Z,hsize[0],activation=tf.nn.sigmoid)
+            h2 = tf.layers.dense(h1,hsize[1],activation=tf.nn.sigmoid)
+            out = tf.layers.dense(h2,28*28)
         return out
 
-    def discriminator(X,hsize=[128,64],reuse=False):
+    def discriminator(X,hsize=[128,60],reuse=False):
         with tf.variable_scope("GAN/Discriminator",reuse=reuse):
-            h1 = tf.layers.dense(X,hsize[0],activation=tf.nn.leaky_relu)
-            h2 = tf.layers.dense(h1,hsize[1],activation=tf.nn.leaky_relu)
-            h3 = tf.layers.dense(h2,32,activation=tf.nn.leaky_relu)
+            h1 = tf.layers.dense(X,hsize[0],activation=tf.nn.sigmoid)
+            h2 = tf.layers.dense(h1,hsize[1],activation=tf.nn.sigmoid)
+            h3 = tf.layers.dense(h2,12,activation=tf.nn.sigmoid)
             out = tf.layers.dense(h3,1)
         return out
 
-    X = tf.placeholder(tf.float32,[None,3072])
+    X = tf.placeholder(tf.float32,[None,28*28])
     Z = tf.placeholder(tf.float32,[None,noise_size])
 
     gen = generator(Z)
@@ -57,11 +56,12 @@ def run(steps,batch_size=10):
         _, dloss = sess.run([disc_step, disc_loss], feed_dict={X: X_batch, Z: Z_batch})
         _, gloss = sess.run([gen_step, gen_loss], feed_dict={Z: Z_batch})
 
-        print ("Iterations: %d\t Discriminator loss: %.4f\t Generator loss: %.4f"%(i,dloss,gloss))
+    print('done')
+        #print ("Iterations: %d\t Discriminator loss: %.4f\t Generator loss: %.4f"%(i,dloss,gloss))
 
 
 def get_image(path):
-    Image.fromarray((((gen.eval(session=sess,feed_dict={Z: np.random.uniform(size=(1,noise_size))})[0]+1)/2)*255).reshape(32,32,3).astype(np.uint8)).save(path)
+    Image.fromarray((((gen.eval(session=sess,feed_dict={Z: np.random.uniform(size=(1,noise_size))})[0]+1)/2)*255).reshape(28,28).astype(np.uint8)).save(path)
 
 
 def go(prefix):
@@ -69,6 +69,6 @@ def go(prefix):
     while True:
         get_image(prefix+str(i)+'.png')
         i = i + 1
-        run(10,1000)
+        run(10,10)
 
 load_gan()
