@@ -3,6 +3,7 @@ from PIL import Image # pillow package
 import numpy as np
 import xmltodict
 import scipy
+import scipy.misc
 
 imgsize = (32,32)
 
