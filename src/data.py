@@ -13,7 +13,7 @@ def get_cats_and_dogs():
     dogs = []
 
     for name in names:
-        img = np.array(Image.open('../data/images/' + name + '.jpg'))
+        img = np.array(Image.open('../data/images/' + name + '.jpg').convert('L'))
 
         with open('../data/xmls/' + name + '.xml') as xml_file:
             xml = xmltodict.parse(xml_file.read())
@@ -28,8 +28,7 @@ def get_cats_and_dogs():
             ymin = int(box['ymin'])
             ymax = int(box['ymax'])
             subimg = scipy.misc.imresize(img[ymin:ymax,xmin:xmax],imgsize)
-
-            if np.shape(subimg) == (32,32,3):
+            if np.shape(subimg) == (32,32):
                 if species == 'cat':
                     cats.append(subimg)
                 elif species == 'dog':
@@ -43,3 +42,4 @@ def get_cats_and_dogs():
         else:
             process_object(xml['annotation']['object'])
     return cats,dogs
+
