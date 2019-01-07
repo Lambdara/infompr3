@@ -28,9 +28,9 @@ def get_cats_and_dogs():
             xmax = int(box['xmax'])
             ymin = int(box['ymin'])
             ymax = int(box['ymax'])
-            subimg = scipy.misc.imresize(img[ymin:ymax, xmin:xmax], imgsize)
 
-            if np.shape(subimg) == (32, 32, 3):
+            subimg = scipy.misc.imresize(img[ymin:ymax,xmin:xmax],imgsize)
+            if np.shape(subimg) == (32,32):
                 if species == 'cat':
                     cats.append(subimg)
                 elif species == 'dog':
@@ -44,3 +44,4 @@ def get_cats_and_dogs():
         else:
             process_object(xml['annotation']['object'])
     return cats, dogs
+
