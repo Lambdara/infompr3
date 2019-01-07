@@ -52,7 +52,7 @@ def load_gan():
 
 def run(steps,batch_size=10):
     for i in range(steps):
-        X_batch = sample_data[np.random.randint(len(cats),size=batch_size),:]
+        X_batch = sample_data[np.random.randint(len(sample_data),size=batch_size),:]
         Z_batch = np.random.uniform(size=(batch_size,noise_size))
         _, dloss = sess.run([disc_step, disc_loss], feed_dict={X: X_batch, Z: Z_batch})
         _, gloss = sess.run([gen_step, gen_loss], feed_dict={Z: Z_batch})
