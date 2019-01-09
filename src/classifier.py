@@ -33,11 +33,35 @@ def load_gan():
 
     def classifier_network(X,reuse=False):
         with tf.variable_scope("classifier",reuse=reuse):
-            h1 = tf.layers.dense(X,1024,activation=tf.nn.sigmoid)
-            h2 = tf.layers.dense(h1,256,activation=tf.nn.sigmoid)
-            h3 = tf.layers.dense(h2,64,activation=tf.nn.sigmoid)
-            h4 = tf.layers.dense(h3,8,activation=tf.nn.sigmoid)
-            out = tf.layers.dense(h4,2)
+            shape1 = tf.reshape(X, [-1, 32, 32, 3])
+            conv1 = tf.layers.conv2d(
+                shape1,
+                filters=16,
+                kernel_size=[4,4],
+                padding="same",
+                activation=tf.nn.relu
+            )
+            pool1 = tf.layers.max_pooling2d(
+                conv1,
+                pool_size=[2,2],
+                strides=2
+            )
+            conv2 = tf.layers.conv2d(
+                pool1,
+                filters=16,
+                kernel_size=[4,4],
+                padding="same",
+                activation=tf.nn.relu
+                )
+            pool2 = tf.layers.max_pooling2d(
+                conv2,
+                pool_size=[2,2],
+                strides=2
+            )
+            shape2 = tf.reshape(pool2, [-1, 1024])
+            h1 = tf.layers.dense(shape2,256,activation=tf.nn.sigmoid)
+            h2 = tf.layers.dense(h1,64,activation=tf.nn.sigmoid)
+            out = tf.layers.dense(h2,2)
         return out
 
     
