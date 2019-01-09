@@ -42,4 +42,4 @@ def get_cats_and_dogs():
                 process_object(obj)
         else:
             process_object(xml['annotation']['object'])
-    return cats,dogs
+    return np.array(cats), np.array(dogs)
