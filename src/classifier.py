@@ -4,7 +4,7 @@ import data
 from PIL import Image
 
 test_size = 500
-learning_rate = 0.001
+learning_rate = 0.0001
 
 def load_data():
     global training_data, training_labels, test_data, test_labels
