@@ -83,6 +83,9 @@ def load_gan():
     tf.global_variables_initializer().run(session=sess)
 
 
+load_gan()
+
+
 def run(steps=10,batch_size=10):
     average_loss = 0
     global prediction
@@ -110,11 +113,14 @@ def run(steps=10,batch_size=10):
     print("Loss:     " + str(classifier_loss))
     print("Accuracy: " + str(accuracy))
 
+    return accuracy
 
-def go(steps=10,batch_size=10):
-    i = 1
-    while True:
-        i = i + 1
-        run(steps,batch_size)
 
-load_gan()
+def go():
+    steps = 100
+    batch_size = 100
+
+    accuracy = 0
+    while accuracy < 0.85:
+        accuracy = run(steps,batch_size)
+

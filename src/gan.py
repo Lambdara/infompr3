@@ -1,14 +1,18 @@
+with_classifier = True
+
 import tensorflow as tf
 import numpy as np
 import data
+if with_classifier:
+    import classifier
 from PIL import Image
 
 if 'cats' not in globals() or 'sample_data' not in globals():
     cats,_ = data.get_cats_and_dogs()
     sample_data = np.array([img.reshape(3072)/255*2-1 for img in cats])
 
-gen_learning_rate = 0.001
-dis_learning_rate = 0.001
+gen_learning_rate = 0.00001
+dis_learning_rate = 0.00001
 noise_size = 8
 
 def load_gan():
@@ -63,12 +67,35 @@ def run(steps,batch_size=10):
 def get_image(path):
     Image.fromarray((((gen.eval(session=sess,feed_dict={Z: np.random.uniform(size=(1,noise_size))})[0]+1)/2)*255).reshape(32,32,3).astype(np.uint8)).save(path)
 
+def get_classification_batch(batch_size=100):
+    return ((gen.eval(session=sess,feed_dict={Z: np.random.uniform(size=(batch_size,noise_size))})[0]+1)/2).reshape(-1,32*32*3)
+
+accuracies = []
 
 def go(prefix):
+    if with_classifier:
+        classifier.go()
+
     i = 1
     while True:
         get_image(prefix+str(i)+'.png')
+        if with_classifier:
+            classification_batch = get_classification_batch()
+            classification = tf.nn.softmax(classifier.classifier,1).eval(
+                feed_dict = {
+                    classifier.x: classification_batch
+                },
+                session = classifier.sess
+            )
+            hits = np.array([0.0,0.0])
+            for j in range(len(classification_batch)):
+                hits += classification[j]
+            accuracy = hits/len(classification_batch)
+            accuracies.append(accuracy[0])
+            print("classification accuracy: " + str(accuracy))
+
         i = i + 1
-        run(10,1000)
+        print(i)
+        run(100,10)
 
 load_gan()
