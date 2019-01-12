@@ -6,8 +6,8 @@ import scipy
 import scipy.misc
 from resizeimage import resizeimage
 
-resize_images = False
-resize_trimaps = False
+resize_images = True
+resize_trimaps = True
 black_background = True
 new_image_size = [64,64]
 
