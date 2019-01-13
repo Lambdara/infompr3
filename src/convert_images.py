@@ -4,7 +4,6 @@ import numpy as np
 import xmltodict
 import scipy
 import scipy.misc
-from resizeimage import resizeimage
 
 resize_images = True
 resize_trimaps = True
