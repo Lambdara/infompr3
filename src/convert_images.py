@@ -6,9 +6,13 @@ import scipy
 import scipy.misc
 
 black_background = False
+noisy_copies = 3
+noise_size = 5
 new_image_size = [64,64]
 
 def resize_and_crop_images():
+    if not os.path.exists('out'):
+        os.makedirs('out')
     names = [path.rsplit('.',1)[0] for path in os.listdir('../data/xmls')]
     results = []
 
@@ -34,17 +38,27 @@ def resize_and_crop_images():
             subimg = img[ymin:ymax,xmin:xmax]
             subtri = tri[ymin:ymax,xmin:xmax]
 
-            if len(np.shape(subimg)) == 3:
-                if (black_background):
-                    for x in range(xmax - xmin):
-                        for y in range(ymax - ymin):
-                            if subtri[y,x] == 2:
-                                subimg[y,x] = 0,0,0
+            copies = [np.copy(subimg) for _ in range(noisy_copies)]
+            copies.append(subimg)
 
-                subimg = scipy.misc.imresize(subimg, new_image_size)
+            for j,copy in enumerate(copies):
+                if len(np.shape(copy)) == 3:
+                    if j != 0:
+                        copy += np.random.randint(low=0,
+                                                  high=noise_size,
+                                                  size=np.shape(copy),
+                                                  dtype='uint8')
+                        copy = np.minimum(copy,255)
+                    if (black_background):
+                        for x in range(xmax - xmin):
+                            for y in range(ymax - ymin):
+                                if subtri[y,x] == 2:
+                                    copy[y,x] = 0,0,0
 
-                Image.fromarray(subimg).save('result'+str(i)+'.png')
-                
+                    copy = scipy.misc.imresize(copy, new_image_size)
+
+                    Image.fromarray(copy).save('out/result'+str(i)+'-' + str(j) + '.png')
+
         if type(xml['annotation']['object']) == list:
             for obj in xml['annotation']['object']:
                 process_object(obj)
