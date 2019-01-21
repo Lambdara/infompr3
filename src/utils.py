@@ -3,6 +3,20 @@ import numpy as np
 import scipy.misc
 
 
+def get_batch(data, labels, batch_size, idx, image_height, image_width, grayscale=False):
+    batch_files = data[idx * batch_size:(idx + 1) * batch_size]
+    batch = [
+        get_image(batch_file, image_height, image_width, resize_height=image_height, resize_width=image_width,
+                  grayscale=grayscale) for batch_file in batch_files]
+    if grayscale:
+        x = np.array(batch).astype(np.float32)[:, :, :, None]
+    else:
+        x = np.array(batch).astype(np.float32)
+
+    y = labels[idx * batch_size:(idx + 1) * batch_size]
+    return x, y
+
+
 def imread(path, grayscale=False):
     if grayscale:
         return scipy.misc.imread(path, flatten=True).astype(np.float)
