@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 from PIL import Image # pillow package
 import numpy as np
@@ -5,7 +6,7 @@ import xmltodict
 import scipy
 import scipy.misc
 
-imgsize = (32,32)
+imgsize = (64,64)
 
 def get_cats_and_dogs():
     names = [path.rsplit('.',1)[0] for path in os.listdir('../data/xmls')]
@@ -29,7 +30,7 @@ def get_cats_and_dogs():
             ymax = int(box['ymax'])
             subimg = scipy.misc.imresize(img[ymin:ymax,xmin:xmax],imgsize)
 
-            if np.shape(subimg) == (32,32,3):
+            if np.shape(subimg) == (imgsize[0],imgsize[1],3):
                 if species == 'cat':
                     cats.append(subimg)
                 elif species == 'dog':
