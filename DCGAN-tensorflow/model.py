@@ -94,13 +94,6 @@ class DCGAN(object):
     self.build_model()
     self.classifier_saver.restore(self.sess, os.path.join('./checkpoint_classifier', 'classifier'))
 
-    t_vars = tf.trainable_variables()
-
-    self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
-    self.g_vars = [var for var in t_vars if 'generator' in var.name]
-
-    self.saver = tf.train.Saver(self.d_vars + self.g_vars)
-
 
   def build_model(self):
     if self.y_dim:
@@ -145,9 +138,9 @@ class DCGAN(object):
 
     self.g_loss = tf.reduce_mean(
       sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_))
-    ) + tf.reduce_mean(
-      tf.reduce_min(classifier_pred, axis=1)
-    )
+    ) + tf.div(tf.reduce_mean(
+      tf.reduce_max(classifier_pred, axis=1)
+    ), 10)
 
     self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
     self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
@@ -157,12 +150,12 @@ class DCGAN(object):
     self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
     self.d_loss_sum = scalar_summary("d_loss", self.d_loss)
 
-    # t_vars = tf.trainable_variables()
-    #
-    # self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
-    # self.g_vars = [var for var in t_vars if 'generator' in var.name]
-    #
-    # self.saver = tf.train.Saver(self.d_vars + self.g_vars)
+    t_vars = tf.trainable_variables()
+
+    self.d_vars = [var for var in t_vars if 'd_' in var.name and 'classifier' not in var.name]
+    self.g_vars = [var for var in t_vars if 'g_' in var.name and 'classifier' not in var.name]
+
+    self.saver = tf.train.Saver(self.d_vars + self.g_vars)
 
   def classifier(self, images):
     with tf.variable_scope("classifier", reuse=False) as scope:
