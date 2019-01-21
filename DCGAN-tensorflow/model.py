@@ -92,6 +92,15 @@ class DCGAN(object):
     self.grayscale = (self.c_dim == 1)
 
     self.build_model()
+    self.classifier_saver.restore(self.sess, os.path.join('./checkpoint_classifier', 'classifier'))
+
+    t_vars = tf.trainable_variables()
+
+    self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
+    self.g_vars = [var for var in t_vars if 'generator' in var.name]
+
+    self.saver = tf.train.Saver(self.d_vars + self.g_vars)
+
 
   def build_model(self):
     if self.y_dim:
@@ -114,6 +123,7 @@ class DCGAN(object):
     self.z_sum = histogram_summary("z", self.z)
 
     self.G                  = self.generator(self.z, self.y)
+    classifier_pred         = self.classifier(self.G)
     self.D, self.D_logits   = self.discriminator(inputs, self.y, reuse=False)
     self.sampler            = self.sampler(self.z, self.y)
     self.D_, self.D_logits_ = self.discriminator(self.G, self.y, reuse=True)
@@ -132,8 +142,12 @@ class DCGAN(object):
       sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D)))
     self.d_loss_fake = tf.reduce_mean(
       sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_)))
+
     self.g_loss = tf.reduce_mean(
-      sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_)))
+      sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_))
+    ) + tf.reduce_mean(
+      tf.reduce_min(classifier_pred, axis=1)
+    )
 
     self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
     self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
@@ -143,12 +157,59 @@ class DCGAN(object):
     self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
     self.d_loss_sum = scalar_summary("d_loss", self.d_loss)
 
-    t_vars = tf.trainable_variables()
+    # t_vars = tf.trainable_variables()
+    #
+    # self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
+    # self.g_vars = [var for var in t_vars if 'generator' in var.name]
+    #
+    # self.saver = tf.train.Saver(self.d_vars + self.g_vars)
 
-    self.d_vars = [var for var in t_vars if 'd_' in var.name]
-    self.g_vars = [var for var in t_vars if 'g_' in var.name]
+  def classifier(self, images):
+    with tf.variable_scope("classifier", reuse=False) as scope:
+      conv1 = tf.layers.conv2d(
+        images,
+        filters=32,
+        kernel_size=[5, 5],
+        padding="SAME",
+        activation=tf.nn.relu
+      )
+      pool1 = tf.layers.max_pooling2d(
+        conv1,
+        pool_size=[2, 2],
+        strides=2
+      )
+      conv2 = tf.layers.conv2d(
+        pool1,
+        filters=64,
+        kernel_size=[5, 5],
+        padding="SAME",
+        activation=tf.nn.relu
+      )
+      pool2 = tf.layers.max_pooling2d(
+        conv2,
+        pool_size=[2, 2],
+        strides=2
+      )
+      conv3 = tf.layers.conv2d(
+        pool2,
+        filters=32,
+        kernel_size=[5, 5],
+        padding="SAME",
+        activation=tf.nn.relu
+      )
+      pool3 = tf.layers.max_pooling2d(
+        conv3,
+        pool_size=[2, 2],
+        strides=2
+      )
+      reshape5 = tf.reshape(pool3, [-1, 2048])
+      h6 = tf.layers.dropout(tf.layers.dense(reshape5, 256, activation=tf.nn.relu), rate=0.8)
+      h7 = tf.layers.dense(h6, 2, activation=None)
+      out = tf.nn.softmax(h7)
 
-    self.saver = tf.train.Saver()
+      trainable_vars = [var for var in tf.trainable_variables(scope='classifier')]
+      self.classifier_saver = tf.train.Saver(trainable_vars)
+      return out
 
   def train(self, config):
     d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
@@ -239,7 +300,7 @@ class DCGAN(object):
           # Update G network
           _, summary_str = self.sess.run([g_optim, self.g_sum],
             feed_dict={
-              self.z: batch_z, 
+              self.z: batch_z,
               self.y:batch_labels,
             })
           self.writer.add_summary(summary_str, counter)
